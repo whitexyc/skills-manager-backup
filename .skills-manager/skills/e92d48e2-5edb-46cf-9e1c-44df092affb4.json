@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "e92d48e2-5edb-46cf-9e1c-44df092affb4",
+  "path": "uv-package-manager",
+  "path_key": "uv-package-manager",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "skillssh",
+    "ref": "wshobson/agents/uv-package-manager",
+    "subpath": "plugins\\python-development\\skills\\uv-package-manager",
+    "branch": null
+  }
+}
