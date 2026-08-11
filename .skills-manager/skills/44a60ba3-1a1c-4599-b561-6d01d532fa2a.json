@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "44a60ba3-1a1c-4599-b561-6d01d532fa2a",
+  "path": "vibe-coding-workflow",
+  "path_key": "vibe-coding-workflow",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
