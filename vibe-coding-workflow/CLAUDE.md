@@ -832,20 +832,30 @@ Tester 测试失败 → Developer 修复后，不需走完整 Review 流程，Re
 - 文件被删除时，标记状态为「🗑️ 已废弃」但不删除索引行
 - 格式：`| 文件路径 | 模块 | 类型 | 内容摘要 | 创建时间 | 最后更新 | 状态 |`
 
-### 10.4 新 Agent 入场阅读顺序
+### 10.4 新 Agent 入场阅读顺序（渐进式披露，非全量阅读）
 
-新 Agent 加入团队时，按以下顺序阅读文件（**状态新鲜度优先**）：
+**核心原则：不要试图读完项目所有文档**——文档越多，全量读入反而触发 context rot（token 越多、模型准确回忆能力越差，Anthropic/Chroma 实测）。正确姿势 = **按需加载**：先读索引（L0 常驻）→ 按任务读对应模块（L1）→ 被追问/需要决策依据才读深度层（L2）。
+
+新 Agent 加入团队时，按以下顺序阅读（**状态新鲜度优先**）：
 
 ```
-1. memory/project-context.md    → 了解项目当前状态和进度（入场必读第一位）
-2. memory/file-index.md         → 定位辅助：了解项目有哪些文件、在哪
-3. memory/agent-activity-log.md → 了解之前每个 Agent 做了什么
-4. CLAUDE.md                    → 了解项目规范和编码规则
-5. .claude/agents/<自己的角色>.md → 了解自己的职责
-6. .claude/workflows/vibe-coding-loop.md → 了解工作流流程
+L0 常驻（每次会话必读，约 1-2 分钟）：
+1. memory/project-context.md    → 项目当前状态和进度（入场必读第一位）
+2. CLAUDE.md                    → 项目规范和编码规则（本文）
+3. 若有 CONTEXT.md / AGENTS.md  → 知识索引 + 最新数字口径（红线规则、文件索引、领域结论）
+
+L1 按需（任务相关才读）：
+4. memory/file-index.md         → 定位辅助：查"某功能在哪个文件/哪个模块"
+5. 涉及模块 X                  → 只读 specs/module-XXX/ 对应目录（task-brief → plan → changelog）
+6. memory/agent-activity-log.md → 追溯某模块开发历史时才读
+
+L2 深度（被追问 / 决策依据才读）：
+7. specs/adr/                   → "为什么这么决策"（决策依据层）
+8. 评估数字 → METRICS.md / eval 目录
+9. 简历/面试材料 → docs/简历/（00-信息包为单一事实源）
 ```
 
-**入场自检**：新 Agent 发现 `file-index.md` / `agent-activity-log.md` 与 `project-context.md` 不一致（如缺 module-XXX 行）时，先补齐再工作，并向 team-lead 报告差异。
+**何时该读更多**：任务涉及某模块改动时，读该模块目录即可；跨模块结论不明确时，回到 L0 索引找线索，而不是扩大全量扫描。**每个文档自带"触发条件"**——没有触发就不读，节省的 token 就是准确率。
 
 ### 10.5 记忆库更新规则
 
