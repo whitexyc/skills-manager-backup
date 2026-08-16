@@ -5,6 +5,7 @@
   "sort_order": 7,
   "tools": {
     "claude_code": true,
+    "deepseek_harness": true,
     "opencode": true,
     "workbuddy": true
   }
