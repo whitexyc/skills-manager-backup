@@ -1,0 +1,8 @@
+interface:
+  display_name: "ASU 简历质检"
+  short_description: "核验角色膨胀、开源贡献、学历表述与指标口径并输出报告"
+  brand_color: "#D97757"
+  default_prompt: "使用 $asu-resume-audit-skill 对这份简历逐条核验，并生成中文 HTML/PDF 证据报告。"
+
+policy:
+  allow_implicit_invocation: true

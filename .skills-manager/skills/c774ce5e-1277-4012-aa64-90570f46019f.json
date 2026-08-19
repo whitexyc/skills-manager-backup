@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "c774ce5e-1277-4012-aa64-90570f46019f",
+  "path": "asu-resume-audit-skill",
+  "path_key": "asu-resume-audit-skill",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
