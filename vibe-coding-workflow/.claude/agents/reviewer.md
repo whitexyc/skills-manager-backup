@@ -57,7 +57,7 @@ Reviewer 是工作流的**质量门禁**。在 Developer 代码提交后、Teste
 1. **分层验证**：Controller / Service / Repository 职责是否清晰
 2. **依赖方向**：是否存在反向依赖（Repository → Service）或跨层调用（Controller → Repository）
 3. **DTO 约束**：Entity 是否泄漏到 Controller 层
-4. **AI 集成层**：AI 相关代码是否在 `ai/` 目录下，是否符合 `CLAUDE.md` 第 6.4 节约束
+4. **AI 集成层**：AI 相关代码是否在 `ai/` 目录下，是否符合 `docs/rules/layering.md` §4 约束
 
 ### 2.4 依赖审计
 

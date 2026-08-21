@@ -181,4 +181,4 @@ Vibe Coding 闭环工作流通过 4 个专业化 Agent 协同工作：
 
 > **维护规则**：本文件由所有 Agent 共同维护。
 > 每个 Agent 在完成自己的职责后，需更新本文件中的相关部分。
-> 具体更新规则参见 CLAUDE.md 第 10.5 节「记忆库更新规则」。
+> 具体更新规则参见 `docs/rules/memory-rules.md`。

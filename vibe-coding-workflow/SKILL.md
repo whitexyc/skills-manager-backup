@@ -5,85 +5,75 @@ description: Use when setting up a multi-agent software project with Planner/Dev
 
 # Vibe Coding 闭环工作流
 
-## Overview
+4 角色闭环（Plan → Develop → Review → Test）+ 模板化文档 + 共享记忆的生产级软件交付工作流。
 
-A structured 4-agent closed-loop workflow (Plan → Develop → Review → Test) for production software delivery. Uses Claude Code Teammate Mode with specialized agent roles, template-driven document outputs, and shared memory for cross-agent state synchronization.
+## 铁律（违反 = 阶段不通过，无需提醒）
 
-The entire workflow specification lives in the project's `CLAUDE.md`. Agent definitions are in `.claude/agents/`. The workflow orchestration is in `.claude/workflows/vibe-coding-loop.md`. Templates are in `templates/`.
+> 与项目 `CLAUDE.md §0` 同步维护——修改须两处同步。验证方式列的工具是模块循环 gate 脚本的落点。
 
-## When to Use
+| # | 铁律 | 验证方式 | 违反后果 |
+|---|------|----------|----------|
+| 1 | 编码前先产出 plan.md + acceptance-criteria.md；Planner 绝不写代码 | 脚本查文件 | 退出码 2 |
+| 2 | 一次一个 module-XXX；新增生产代码 ≤200 行 | git diff --numstat | 阶段不通过 |
+| 3 | 方法 ≤50 行、类 ≤500 行；超限拆分或 plan.md 说明 | 静态分析 | Review 驳回 |
+| 4 | public/导出方法必须有 Javadoc/Docstring/JSDoc；魔法数字命名常量 | checkstyle/pylint/ESLint | Review 驳回 |
+| 5 | 严禁空 catch/吞异常；业务异常统一 BusinessException | 正则扫描 | Review 驳回 |
+| 6 | 严禁跨层/反向/循环依赖；Entity 不暴露到 Controller（DTO） | ArchUnit/import 检查 | Review 驳回 |
+| 7 | API 统一 {code, msg, data, timestamp, request_id} | 接口测试 | Test 驳回 |
+| 8 | INFO 日志（入参摘要+耗时）；异常含 request_id；禁打敏感信息 | 日志扫描 | Review 驳回 |
+| 9 | 禁 SQL 拼接、禁硬编码密钥/明文密码 | semgrep/gitleaks | Review 驳回 |
+| 10 | 架构变更走 ADR：发现者写 → Planner 审批 → 更新索引 | docs/adr/ 核对 | 不算完成 |
+| 11 | 入场先读记忆三件套，阶段退出前必写 | verifyMemory | 退出码 3 |
+| 12 | 交接前自跑 lint+测试贴输出；文档用 templates/ 模板 | 内容校验 | 不算完成 |
 
-- You want a **repeatable multi-agent pipeline** for software projects
-- You need **clear role separation** (one agent plans, another codes, another reviews, another tests)
-- You want **template-driven consistency** across specs, changelogs, review reports, and test reports
-- You need **shared project memory** that all agents read/write
+## 角色（一句话 + 指针）
 
-**Do NOT use** for one-off tasks, simple scripts, or projects where a single agent suffices.
+| 角色 | 职责一句话 | 定义文件 |
+|------|-----------|----------|
+| Planner | 出 plan.md + acceptance-criteria.md，不写代码 | .claude/agents/planner.md |
+| Developer | 按 plan 实现，产出代码 + changelog.md | .claude/agents/developer.md |
+| Reviewer | 读全文件审查，report 附 文件:行号 证据 | .claude/agents/reviewer.md |
+| Tester | 全量回归 + 新测试，产出 test-report.md | .claude/agents/tester.md |
 
-## Quick Reference
+四阶段闭环/超时/回退 → `.claude/workflows/vibe-coding-loop.md`
+模块循环驱动脚本 → `templates/module-loop-template.js`
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| Project specification | `CLAUDE.md` (root) | Complete workflow rules, coding standards, architecture |
-| Agent definitions | `.claude/agents/*.md` | Individual role prompts (Planner/Developer/Reviewer/Tester) |
-| Workflow orchestration | `.claude/workflows/vibe-coding-loop.md` | Phase sequencing, handoff protocols, error recovery |
-| Templates (8) | `templates/*.md` | plan, acceptance-criteria, changelog, review-report, test-report, ADR, implementation-plan, tech-stack |
-| Shared memory | `memory/project-context.md` + `memory/file-index.md` + `memory/agent-activity-log.md` | Three-file memory system: status (project-context) / index (file-index) / activity log (agent-activity-log) |
-| Activity log | `memory/agent-activity-log.md` | Per-module per-phase activity: 1 row per phase (PLAN/CODE/REVIEW/TEST) |
-| Environment troubleshooting | `environment-troubleshooting.md` | Common environment issue fixes (subagent model / permission allowlist / Windows pitfalls / real-DB smoke test) |
-| Module specs | `specs/module-XXX-<name>/` | Per-module deliverables (plan, changelog, review, test reports) |
+## 入场阅读顺序（L0/L1/L2 渐进披露，无触发不读）
 
-## Key Principles
+**L0 常驻（每次会话必读）：**
+1. `memory/project-context.md` → 项目状态（第一位）
+2. `CLAUDE.md` → 铁律与指针（本技能）
 
-These principles are encoded in `CLAUDE.md` and all agent definitions — read those files for the full specification:
+**L1 按需（任务相关才读）：**
+3. `memory/file-index.md` → 定位文件
+4. `specs/module-XXX/` → 涉及模块时读 plan/changelog
+5. `memory/agent-activity-log.md` → 追溯历史
 
-- **Spec before code**: Planner outputs `plan.md` + `acceptance-criteria.md` before any coding begins
-- **One module at a time**: Each iteration processes exactly one `module-XXX` (default ≤ 200 new lines)
-- **4-phase closed loop**: Plan → Develop → Review → Test, each with defined input/output documents and exit criteria
-- **3-retry max per phase**: Each phase has explicit retry limits before escalation to Planner; may request relaxation (e.g. 3→8) when there's evidence of progress — the default cap is not a hard ceiling
-- **Active monitoring**: The orchestrator (Planner) checks agent status every 2-5 minutes and intervenes immediately on timeout
-- **Shared memory**: three-file system — `memory/project-context.md` (status) / `memory/file-index.md` (index) / `memory/agent-activity-log.md` (activity log) — read/written by all agents at phase transitions
-- **ADR for architecture decisions**: Architecture changes are recorded as `docs/adr/adr-XXX-<title>.md`
-- **Template-driven**: Every deliverable uses a predefined template from `templates/`
+**L2 深度（被追问/决策依据才读）：**
+6. `docs/rules/` → 命名/接口/分层/编码细则
+7. `docs/adr/` → 决策依据
+8. `docs/reference/` → 目录结构/快速启动
 
-## Startup Checklist
+> 每个文档自带触发条件——没有触发就不读，节省的 token 就是准确率。
 
-When initializing a new project:
+## 快速启动（新项目 7 步）
 
-1. Copy `CLAUDE.md`, `.claude/`, `memory/`, and `templates/` to project root
-2. Fill `tech-stack.md` (tech stack config, template at `templates/tech-stack-template.md`)
-3. Configure environment pre-check: verify `CLAUDE_CODE_SUBAGENT_MODEL` points to a working model (smoke-test with 1 subagent — expect a normal response, not a 400), and set a baseline permission `allow` allowlist (e.g. `PowerShell(git*|python*|pip*|uv*|make*|npm*)` + `Write(*.md|*.py)`)
-4. Initialize `memory/project-context.md` with project name and tech stack
-5. Initialize `memory/agent-activity-log.md` and `memory/file-index.md`
-6. Initialize Git repo: `main` + `develop` branches
-7. Planner outputs first module-001 plan
+1. 拷贝 `CLAUDE.md`、`.claude/`、`memory/`、`templates/`、`docs/` 到项目根
+2. 填 `tech-stack.md`
+3. 环境预检：`CLAUDE_CODE_SUBAGENT_MODEL` 冒烟验证 + 权限 allow 白名单
+4. 初始化 memory 三件套
+5. git init：`main` + `develop`
+6. Planner 输出 module-001 的 plan.md + acceptance-criteria.md
+7. 启动模块循环驱动
 
-## Common Mistakes
+## 常见错误（这不算完成）
 
-- **Skipping templates**: Every document (plan, changelog, review, test) MUST use its template — do not invent ad-hoc formats
-- **Planner writing code**: Planner's output is `plan.md` + `acceptance-criteria.md` — never source files
-- **Developer exceeding plan scope**: Only implement items listed in `plan.md` — no unsolicited features
-- **Reviewer reading diff only**: Must read full file contents, not just git diff
-- **Tester skipping regression**: Full test suite must pass (100% regression), not just new tests
-- **Parallel module development**: Only one module active at a time — no concurrent module work
-- **Ignoring shared memory**: Always read the three memory files (`project-context.md` / `file-index.md` / `agent-activity-log.md`) at phase start, write them at phase end
+- 跳过模板自创格式；Planner 写代码；超 plan 范围加功能
+- Reviewer 只看 diff 不看全文件；Tester 跳过回归只跑新测试
+- changelog 只列文件名不写设计说明；声称测试通过但不贴命令输出
+- 并行开发多个模块；入场不读记忆三件套；交接不写记忆库
 
-## Agent Onboarding Order
+## 相关文件
 
-New agents joining the project should read in this order:
-
-1. `memory/project-context.md` — current state (freshness first)
-2. `memory/file-index.md` — project file map (locating aid)
-3. `memory/agent-activity-log.md` — per-module per-phase activity (4 rows per module)
-4. `CLAUDE.md` — full rules and standards
-5. `.claude/agents/<role>.md` — own role definition
-6. `.claude/workflows/vibe-coding-loop.md` — workflow orchestration
-
-## Related
-
-This skill provides the workflow framework. Components it references:
-- Each agent definition (`.claude/agents/*.md`) — role-specific prompts
-- `templates/` — all 8 document templates
-- `memory/project-context.md` — shared state template (with `file-index.md` and `agent-activity-log.md`, the three-file memory system)
-- `environment-troubleshooting.md` — common environment issue fixes (subagent model / permission allowlist / Windows pitfalls / real-DB smoke test)
-- `.claude/workflows/vibe-coding-loop.md` — orchestration details, phase timing, error recovery paths, Git branch strategy, config parameters
+- 环境排查 → `environment-troubleshooting.md`
+- 记忆库读写规则 → `docs/rules/memory-rules.md`

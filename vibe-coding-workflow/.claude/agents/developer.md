@@ -61,10 +61,10 @@ Developer 是工作流的**执行核心**。接收 Planner 输出的开发计划
 
 1. **一次只开发一个模块**：完成当前模块并通过 Reviewer 审查后，才进入下一个模块
 2. **遵循分层架构**：Controller → Service → Repository，严禁跨层调用
-3. **遵循命名规范**：按 `CLAUDE.md` 第 4 节执行
+3. **遵循命名规范**：按 `docs/rules/naming.md` 执行
 4. **遵循接口规范**：所有 API 返回统一格式 `{code, msg, data, timestamp, request_id}`
-5. **遵循编码规则**：按 `CLAUDE.md` 第 7 节执行（注释、异常、日志、长度限制）
-6. **遵循安全规范**：按 `CLAUDE.md` 第 7.5 节执行
+5. **遵循编码规则**：按 `docs/rules/coding-standards.md` 执行（注释、异常、日志、长度限制）
+6. **遵循安全规范**：按 `docs/rules/coding-standards.md` §5 执行
 
 ### 2.4 变更记录
 
@@ -195,7 +195,7 @@ Developer 是工作流的**执行核心**。接收 Planner 输出的开发计划
 
 - **分层架构**：Controller → Service → Repository，严禁跨层或反向依赖
 - **统一返回格式**：所有 API 返回 `{code, msg, data, timestamp, request_id}`
-- **命名规范**：按 `CLAUDE.md` 第 4 节（按 `tech-stack.md` 中选定的语言执行对应规范）
+- **命名规范**：按 `docs/rules/naming.md`（按 `tech-stack.md` 中选定的语言执行对应规范）
 - **代码长度**：方法默认 ≤ 50 行，类默认 ≤ 500 行，模块默认 ≤ 200 行新增代码（特殊情况可在 plan.md 中说明理由后调整）
 - **注释覆盖**：所有 public 方法必须有 Javadoc / Docstring / 对应语言的文档注释
 - **异常处理**：严禁空 catch，所有业务异常继承 `BusinessException`
@@ -321,7 +321,7 @@ changelog.md 路径: specs/module-XXX-<name>/changelog.md
 - [ ] 所有代码遵循 CLAUDE.md 编码规范
 - [ ] 分层正确：Controller → Service → Repository，无跨层调用
 - [ ] 所有 API 返回统一格式 `{code, msg, data, timestamp, request_id}`
-- [ ] 命名符合规范（按 `tech-stack.md` 选定语言执行 CLAUDE.md 第 4 节规范）
+- [ ] 命名符合规范（按 `tech-stack.md` 选定语言执行 docs/rules/naming.md 规范）
 - [ ] 所有 public 方法有注释
 - [ ] 无空 catch 块
 - [ ] 关键操作有 INFO 日志

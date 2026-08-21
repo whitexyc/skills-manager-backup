@@ -625,7 +625,7 @@ main                              # 稳定主分支（仅合并发布版本）
 | Test 通过 | `git add . && git commit` | 测试代码提交 |
 | Test 通过 | `git checkout develop && git merge feature/module-XXX-<name>` | 合并到 develop |
 
-**提交信息格式**（遵循 `CLAUDE.md` 第 8.3 节）：
+**提交信息格式**（提交信息规范见本文件 §6.3）：
 
 ```
 [类型] module-XXX: 简短描述
@@ -674,7 +674,7 @@ main                              # 稳定主分支（仅合并发布版本）
 
 ### 6.4 版本号规则
 
-遵循 `CLAUDE.md` 第 8.1 节的语义化版本号：
+遵循本文件 §6.4 的语义化版本号规则：
 
 ```
 主版本号.次版本号.修订号 - 模块编号
@@ -698,7 +698,7 @@ main                              # 稳定主分支（仅合并发布版本）
 ### 7.1 project-context.md 读写规则
 
 **文件位置**：`memory/project-context.md`
-**结构定义**：`CLAUDE.md` 第 10.1 节
+**结构定义**：以 `memory/project-context.md` 模板为准（更新规则见 `docs/rules/memory-rules.md`）
 
 ### 7.2 读写时机矩阵（三记忆文件）
 
@@ -743,7 +743,7 @@ main                              # 稳定主分支（仅合并发布版本）
 - **写及时**：阶段状态变更后立即写入，不等阶段结束再批量更新
 - **不覆盖**：更新时只追加/修改自己的部分，不覆盖其他 Agent 的记录
 - **原子性**：状态更新和通知消息发送应连续完成，避免中间状态不一致
-- **交接前置校验**：本阶段退出条件 = 三文件均已按 `CLAUDE.md` §10.5 强制项更新（project-context 状态 + file-index 索引 + agent-activity-log 阶段日志），缺一不可；未写齐不得进入下一阶段（与 §4.1-4.4 阶段退出条件一致）
+- **交接前置校验**：本阶段退出条件 = 三文件均已按 `docs/rules/memory-rules.md` 强制项更新（project-context 状态 + file-index 索引 + agent-activity-log 阶段日志），缺一不可；未写齐不得进入下一阶段（与 §4.1-4.4 阶段退出条件一致）
 
 ### 7.4 记忆库字段与阶段对应
 
@@ -860,7 +860,7 @@ T41     Tester          SendMessage → Developer + team-lead
 
 | 模板 | 路径 | 使用者 |
 |------|------|--------|
-| 开发计划模板（简略版） | `CLAUDE.md` 第 12 节 | Planner（简单模块 ≤ 100 行） |
+| 开发计划模板（简略版） | `templates/spec-template.md`（简略版结构） | Planner（简单模块 ≤ 100 行） |
 | 开发计划模板（详细版） | `templates/spec-template.md` | Planner（复杂模块 > 100 行） |
 | 验收标准模板 | `templates/acceptance-criteria.md` | Planner |
 | 实现计划模板 | `templates/implementation-plan-template.md` | Developer（编码前产出） |
@@ -869,7 +869,7 @@ T41     Tester          SendMessage → Developer + team-lead
 | 测试报告模板 | `templates/test-report-template.md` | Tester |
 | ADR 模板 | `templates/adr-template.md` | Planner / Developer / Reviewer / Tester |
 
-> 注：模板核心结构定义见 `CLAUDE.md` 相应章节，详细模板见 `templates/` 目录。两者核心字段保持一致，`templates/` 版本为完整详细版。
+> 注：模板以 `templates/` 目录为唯一权威来源（原 CLAUDE.md §11/§12 模板字段已并入对应模板文件）。
 
 ---
 
