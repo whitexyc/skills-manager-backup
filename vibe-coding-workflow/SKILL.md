@@ -9,7 +9,7 @@ description: Use when setting up a multi-agent software project with Planner/Dev
 
 ## 铁律（违反 = 阶段不通过，无需提醒）
 
-> 与项目 `CLAUDE.md §0` 同步维护——修改须两处同步。验证方式列的工具是模块循环 gate 脚本的落点。
+> 与项目 `CLAUDE.md §0` 同步维护——修改须两处同步。验证方式列已部分脚本化：`templates/check-gates.js` 在模块循环 DEVELOP/REVIEW 阶段自动执行（失败退出码 4，可经 config.gates.enabled=false 关闭）。
 
 | # | 铁律 | 验证方式 | 违反后果 |
 |---|------|----------|----------|

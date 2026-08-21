@@ -22,7 +22,7 @@
 | 11 | 记忆三件套：**入场先读**（project-context → file-index → activity-log），**阶段退出前必须写入本模块记录** | `verifyMemory` 脚本 | 退出码 3 |
 | 12 | 交接前自跑 lint + 测试并贴命令输出为证；交付文档必须用 `templates/` 对应模板，不得自创格式 | changelog/报告内容校验 | 不算完成 |
 
-> 注：验证方式列的工具是 `module-loop-template.js` gate 脚本的落点（当前阶段由人工/Review 核查，后续脚本化）。
+> 注：验证方式列**已部分脚本化**——`templates/check-gates.js` 由模块循环在 DEVELOP/REVIEW 阶段退出前自动执行（覆盖铁律 2/3/4/5/9/12 + 审查证据），任一失败 → 退出码 4；可经 `config.gates.enabled=false` 关闭。启发式检查（正则/括号平衡）不能替代 Review。
 
 ## 1. 角色与闭环（指针）
 
@@ -34,7 +34,7 @@
 | Tester | 全量回归（100%）+ 新测试，产出 test-report.md | @.claude/agents/tester.md |
 
 - 四阶段闭环（Plan→Develop→Review→Test）、超时监控、回退路径 → @.claude/workflows/vibe-coding-loop.md
-- 模块循环驱动脚本（退出码 0/1/2/3）→ templates/module-loop-template.js
+- 模块循环驱动脚本（退出码 0/1/2/3/4）→ templates/module-loop-template.js；规则闸门 → templates/check-gates.js
 - Planner 可按模块复杂度扩展同一角色多实例（如 Developer-Frontend/Backend），在 plan.md 中明确
 
 ## 2. 按需查阅索引（无触发不读）

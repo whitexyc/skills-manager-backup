@@ -29,7 +29,7 @@ vibe-coding-workflow/
 │   ├── api/                           # API 接口文档
 │   ├── requirements/                  # 需求文档（Planner 输出）
 │   └── test-reports/                  # 测试报告（Tester 输出）
-├── templates/                         # 模板文件目录（权威模板来源，共 8 个）
+├── templates/                         # 模板 + 驱动脚本目录（权威来源：8 模板 + 2 脚本）
 │   ├── spec-template.md               # 模块规格模板
 │   ├── acceptance-criteria.md         # 验收标准模板
 │   ├── review-checklist.md            # 审查清单模板
@@ -38,6 +38,8 @@ vibe-coding-workflow/
 │   ├── test-report-template.md        # 测试报告模板
 │   ├── implementation-plan-template.md # 实现计划模板
 │   └── tech-stack-template.md         # 技术栈配置模板
+│   ├── module-loop-template.js        # 模块循环驱动脚本（退出码 0/1/2/3/4）
+│   └── check-gates.js                 # 规则闸门校验（铁律机械化，见 CLAUDE.md §0 注）
 ├── .claude/                           # Agent 定义与工作流
 │   ├── agents/
 │   │   ├── planner.md                 # Planner（规划师）角色定义

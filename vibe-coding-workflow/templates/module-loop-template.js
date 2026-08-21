@@ -18,6 +18,7 @@
  *   1 = 阶段超时（每阶段总时长超过 LOOP_PHASE_TIMEOUT，默认 30 分钟）
  *   2 = 重试耗尽（轮次达上限，可经 §5.5 升级申请放宽后以更高上限重跑）
  *   3 = 三记忆文件缺项（阶段退出前置校验失败，缺 project-context / agent-activity-log / file-index 任一）
+ *   4 = 规则 gate 未通过（templates/check-gates.js 校验失败，见其 [FAIL] 输出；可经 config.gates.enabled=false 关闭）
  *
  * 介入钩子（环境变量覆盖）：
  *   LOOP_MONITOR_INTERVAL  — §5.0 定时检查轮询间隔（秒），默认 300（5 分钟）
@@ -31,6 +32,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { spawnSync } = require('child_process');
 
 // ---------------------------------------------------------------------------
 // 配置加载（workflow §9.1：默认值 + .claude/config.json 覆盖）
@@ -45,6 +47,7 @@ function loadConfig() {
     max_tester_retry: 3,
     max_reviewer_rounds_escalated: 8,
     max_tester_retry_escalated: 8,
+    gates: { enabled: true },        // 规则闸门开关（false=跳过 check-gates.js）
   };
   try {
     if (fs.existsSync(CONFIG_PATH)) {
@@ -133,6 +136,19 @@ function verifyMemory(phase) {
   return true;
 }
 
+// §0 铁律机械化闸门：DEVELOP/REVIEW 阶段退出前执行 templates/check-gates.js（退出码 4）
+function runGates(phase) {
+  const gatesEnabled = config.gates && config.gates.enabled !== false;
+  if (!gatesEnabled) { log(phase, '[GATE] 已禁用（config.gates.enabled=false），跳过规则校验'); return; }
+  log(phase, '[GATE] 执行规则校验（templates/check-gates.js）...');
+  const res = spawnSync(process.execPath, [path.join(__dirname, 'check-gates.js'), phase.toLowerCase()], { stdio: 'inherit' });
+  if (res.status !== 0) {
+    console.error(`退出码 4: ${phase} 阶段规则 gate 未通过（详见上方 [FAIL] 输出；可经 config.gates.enabled=false 关闭）`);
+    process.exit(4);
+  }
+  log(phase, '[GATE] 规则校验通过');
+}
+
 // ---------------------------------------------------------------------------
 // 阶段驱动（各阶段内容以 workflow §4.1-4.4 为准，此处仅做驱动与校验）
 // ---------------------------------------------------------------------------
@@ -165,9 +181,13 @@ function main() {
     path.join(SPEC_DIR, 'changelog.md'),
   ], 'developer_retry');
 
+  runGates('DEVELOP');
+
   runPhase('REVIEW', '.claude/agents/reviewer.md', [
     path.join(SPEC_DIR, 'review-report.md'),
   ], 'reviewer_rounds');
+
+  runGates('REVIEW');
 
   runPhase('TEST', '.claude/agents/tester.md', [
     path.join(SPEC_DIR, 'test-report.md'),
