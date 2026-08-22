@@ -1,6 +1,10 @@
 ---
 name: vibe-coding-workflow
-description: Use when setting up a multi-agent software project with Planner/Developer/Reviewer/Tester roles in a closed-loop workflow, or when joining an existing project that uses module-XXX numbering, specs/ directories, and shared project-context.md memory.
+description: Use when setting up a multi-agent software project with
+  Planner/Developer/Reviewer/Tester roles in a closed-loop workflow, or when
+  joining an existing project that uses module-XXX numbering, specs/
+  directories, and shared project-context.md memory.
+disable-model-invocation: true
 ---
 
 # Vibe Coding 闭环工作流

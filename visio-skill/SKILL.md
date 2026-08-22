@@ -1,4 +1,8 @@
-﻿---
+---
+disable-model-invocation: true
+---
+
+---
 name: visio-skill
 description: Generate or modify Microsoft Visio .vsdx diagrams using local Visio COM automation. Use when the user asks Codex to create Visio files, draw flowcharts, architecture diagrams, sequence diagrams, swimlane-style layouts, network topology diagrams, process maps, or to automate shapes/connectors/text in Microsoft Visio on Windows.
 ---
