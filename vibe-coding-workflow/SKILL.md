@@ -1,10 +1,6 @@
 ---
 name: vibe-coding-workflow
-description: Use when setting up a multi-agent software project with
-  Planner/Developer/Reviewer/Tester roles in a closed-loop workflow, or when
-  joining an existing project that uses module-XXX numbering, specs/
-  directories, and shared project-context.md memory.
-disable-model-invocation: false
+description: Use when setting up a multi-agent software project with Planner/Developer/Reviewer/Tester roles in a closed-loop workflow, or when joining an existing project that uses module-XXX numbering, specs/ directories, and shared project-context.md memory.
 ---
 
 # Vibe Coding 闭环工作流
@@ -13,22 +9,24 @@ disable-model-invocation: false
 
 ## 铁律（违反 = 阶段不通过，无需提醒）
 
-> 与项目 `CLAUDE.md §0` 同步维护——修改须两处同步。验证方式列已部分脚本化：`templates/check-gates.js` 在模块循环 DEVELOP/REVIEW 阶段自动执行（失败退出码 4，可经 config.gates.enabled=false 关闭）。
+> 与项目 `CLAUDE.md §0` 同步维护——修改须两处同步。验证方式列已部分脚本化：`templates/check-gates.js` 在 DEVELOP/REVIEW 阶段自动执行，`templates/delivery-gate.js` 在 TEST 后校验记忆 mtime 新鲜度（均失败退出码 4，可经 config.gates.enabled=false 关闭）。
 
 | # | 铁律 | 验证方式 | 违反后果 |
 |---|------|----------|----------|
-| 1 | 编码前先产出 plan.md + acceptance-criteria.md；Planner 绝不写代码 | 脚本查文件 | 退出码 2 |
+| 1 | 编码前先产出 plan.md + acceptance-criteria.md；Planner 绝不写代码（轻量模式豁免：小改可直接执行，须留 changelog + 记忆行） | 脚本查文件 | 退出码 2 |
 | 2 | 一次一个 module-XXX；新增生产代码 ≤200 行 | git diff --numstat | 阶段不通过 |
 | 3 | 方法 ≤50 行、类 ≤500 行；超限拆分或 plan.md 说明 | 静态分析 | Review 驳回 |
 | 4 | public/导出方法必须有 Javadoc/Docstring/JSDoc；魔法数字命名常量 | checkstyle/pylint/ESLint | Review 驳回 |
-| 5 | 严禁空 catch/吞异常；业务异常统一 BusinessException | 正则扫描 | Review 驳回 |
+| 5 | 严禁空 catch/吞异常；业务异常统一 BusinessException（确定性脚本 I/O 容错 catch 带注释即豁免） | 正则扫描 | Review 驳回 |
 | 6 | 严禁跨层/反向/循环依赖；Entity 不暴露到 Controller（DTO） | ArchUnit/import 检查 | Review 驳回 |
 | 7 | API 统一 {code, msg, data, timestamp, request_id} | 接口测试 | Test 驳回 |
 | 8 | INFO 日志（入参摘要+耗时）；异常含 request_id；禁打敏感信息 | 日志扫描 | Review 驳回 |
 | 9 | 禁 SQL 拼接、禁硬编码密钥/明文密码 | semgrep/gitleaks | Review 驳回 |
 | 10 | 架构变更走 ADR：发现者写 → Planner 审批 → 更新索引 | docs/adr/ 核对 | 不算完成 |
-| 11 | 入场先读记忆三件套，阶段退出前必写 | verifyMemory | 退出码 3 |
+| 11 | 入场先读记忆三件套，阶段退出前必写 | verifyMemory + delivery-gate(mtime) | 退出码 3/4 |
 | 12 | 交接前自跑 lint+测试贴输出；文档用 templates/ 模板 | 内容校验 | 不算完成 |
+| 13 | 脚本类工具必须纯 Node 内置模块 + 头部用途注释（用法/退出码/环境变量） | 代码检查 | 不算完成 |
+| 14 | 闸门/审计类脚本必须配套可机械断言的夹具用例 | 夹具矩阵 | 不算完成 |
 
 ## 角色（一句话 + 指针）
 
@@ -81,3 +79,4 @@ disable-model-invocation: false
 
 - 环境排查 → `environment-troubleshooting.md`
 - 记忆库读写规则 → `docs/rules/memory-rules.md`
+- 规则闸门 → `templates/check-gates.js`；记忆闸门 → `templates/delivery-gate.js`；pre-commit 安装 → `templates/install-precommit.js`；安全审计 → `templates/audit-scan.js`；技能体检 → `templates/skill-stocktake.js`

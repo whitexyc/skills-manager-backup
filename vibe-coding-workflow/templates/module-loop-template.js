@@ -18,7 +18,7 @@
  *   1 = 阶段超时（每阶段总时长超过 LOOP_PHASE_TIMEOUT，默认 30 分钟）
  *   2 = 重试耗尽（轮次达上限，可经 §5.5 升级申请放宽后以更高上限重跑）
  *   3 = 三记忆文件缺项（阶段退出前置校验失败，缺 project-context / agent-activity-log / file-index 任一）
- *   4 = 规则 gate 未通过（templates/check-gates.js 校验失败，见其 [FAIL] 输出；可经 config.gates.enabled=false 关闭）
+ *   4 = 规则/记忆闸门未通过（templates/check-gates.js 或 templates/delivery-gate.js 校验失败，见其 [FAIL] 输出；可经 config.gates.enabled=false 关闭）
  *
  * 介入钩子（环境变量覆盖）：
  *   LOOP_MONITOR_INTERVAL  — §5.0 定时检查轮询间隔（秒），默认 300（5 分钟）
@@ -141,12 +141,25 @@ function runGates(phase) {
   const gatesEnabled = config.gates && config.gates.enabled !== false;
   if (!gatesEnabled) { log(phase, '[GATE] 已禁用（config.gates.enabled=false），跳过规则校验'); return; }
   log(phase, '[GATE] 执行规则校验（templates/check-gates.js）...');
-  const res = spawnSync(process.execPath, [path.join(__dirname, 'check-gates.js'), phase.toLowerCase()], { stdio: 'inherit' });
+  const res = spawnSync(process.execPath, [path.join(__dirname, 'check-gates.js'), phase.toLowerCase()], { stdio: 'inherit', env: { ...process.env, GATE_MODULE: MODULE } });
   if (res.status !== 0) {
     console.error(`退出码 4: ${phase} 阶段规则 gate 未通过（详见上方 [FAIL] 输出；可经 config.gates.enabled=false 关闭）`);
     process.exit(4);
   }
   log(phase, '[GATE] 规则校验通过');
+}
+
+// §铁律 11 记忆新鲜度闸门：TEST 阶段完成后执行 templates/delivery-gate.js（mtime 确定性校验）
+function runDeliveryGate() {
+  const gatesEnabled = config.gates && config.gates.enabled !== false;
+  if (!gatesEnabled) { log('DELIVERY', '[GATE] 已禁用（config.gates.enabled=false），跳过'); return; }
+  log('DELIVERY', '[GATE] 执行记忆新鲜度校验（templates/delivery-gate.js）...');
+  const res = spawnSync(process.execPath, [path.join(__dirname, 'delivery-gate.js')], { stdio: 'inherit', env: { ...process.env, GATE_MODULE: MODULE } });
+  if (res.status !== 0) {
+    console.error('退出码 4: 记忆闸门未通过（delivery-gate.js 输出见上；可经 config.gates.enabled=false 关闭）');
+    process.exit(4);
+  }
+  log('DELIVERY', '[GATE] 记忆新鲜度校验通过');
 }
 
 // ---------------------------------------------------------------------------
@@ -192,6 +205,8 @@ function main() {
   runPhase('TEST', '.claude/agents/tester.md', [
     path.join(SPEC_DIR, 'test-report.md'),
   ], 'tester_retry');
+
+  runDeliveryGate();
 
   console.log(`===== ${MODULE} 四阶段完成：specs 5 件套 + 三记忆文件就绪，进入模块完成判定 =====`);
   process.exit(0);

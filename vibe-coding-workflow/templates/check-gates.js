@@ -9,11 +9,14 @@
  * 用法：
  *   node templates/check-gates.js develop     # 代码闸门（铁律 2/3/4/5/9/12）
  *   node templates/check-gates.js review      # 审查证据闸门（review-report 须含 文件:行号 证据）
+ *   node templates/check-gates.js precommit   # 提交前闸门（git 暂存区，铁律 3/4/5/9；经 install-precommit.js 挂载）
  *   node templates/check-gates.js develop -v  # 详细输出（含 [OK]）
  *
  * 环境变量：
  *   GATE_ENABLED=false        整体关闭（等价 config.gates.enabled=false）
  *   GATE_DIFF_BASE=develop    diff 基准（默认自动：origin/develop → develop → main → HEAD~1）
+ *   GATE_MODULE=module-XXX    当前模块号（违规台账行使用，模块循环自动注入）
+ *   GATE_VIOLATIONS_FILE=...  违规台账路径（默认 cwd/memory/violations.md）
  *   GATE_MAX_MODULE_LINES=200 铁律 2 上限
  *   GATE_MAX_METHOD_LINES=50  铁律 3 方法上限
  *   GATE_MAX_CLASS_LINES=500  铁律 3 类上限
@@ -46,20 +49,44 @@ const CFG = {
 };
 
 const phase = (process.argv[2] || 'develop').toLowerCase();
+const PRE_COMMIT = phase === 'precommit';
 const verbose = process.argv.includes('-v') || process.argv.includes('--verbose');
 let failures = 0;
 const failMsgs = [];
 
 function log(msg) { console.log(`[gate] ${msg}`); }
 function ok(rule, msg) { if (verbose) log(`[OK]   铁律${rule} ${msg}`); }
-function fail(rule, msg) { failures++; failMsgs.push(`铁律${rule}: ${msg}`); console.log(`[FAIL] 铁律${rule} ${msg}`); }
+function fail(rule, msg) { failures++; failMsgs.push(`铁律${rule}: ${msg}`); console.log(`[FAIL] 铁律${rule} ${msg}`); appendViolation(rule, msg); }
+
+// 违规台账：失败时自动追加 memory/violations.md（GATE_VIOLATIONS_FILE 可覆盖；GATE_MODULE 由模块循环注入）
+function appendViolation(rule, msg) {
+  try {
+    const esc = (s) => String(s).replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+    const trunc = (s) => Array.from(s).slice(0, 80).join('');
+    const file = process.env.GATE_VIOLATIONS_FILE || path.join(process.cwd(), 'memory', 'violations.md');
+    const mod = trunc(esc(process.env.GATE_MODULE || 'unknown'));
+    const date = new Date().toISOString().slice(0, 10);
+    const ruleS = esc(rule);
+    const reason = trunc(esc(msg));
+    if (!fs.existsSync(file)) {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, '# 违规台账（check-gates/delivery-gate 自动收集）\n\n> 格式：模块 | 铁律 | 日期 | 原因；轮次与聚合见 docs/rules/rules-distill.md。\n\n| 模块 | 铁律 | 日期 | 原因 |\n|------|------|------|------|\n');
+    }
+    fs.appendFileSync(file, `| ${mod} | ${ruleS} | ${date} | ${reason} |\n`);
+  } catch (_) { /* 台账写入失败不阻断闸门 */ }
+}
 
 // ---------------------------------------------------------------------------
 // git / 文件发现
 // ---------------------------------------------------------------------------
 function run(cmd, args) {
   try { return execFileSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }); }
-  catch (_) { return ''; }
+  catch (e) {
+    if (e && (e.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' || String(e.message).includes('maxBuffer'))) {
+      console.warn('[gate][warn] git 输出超过 64MB 上限，结果可能不完整（静默失效风险）');
+    }
+    return '';
+  }
 }
 
 function guessBase() {
@@ -77,6 +104,26 @@ function gitChangedFiles() {
   return files.filter(f => fs.existsSync(f));
 }
 
+// 生产代码变更文件（测试/文档豁免）；precommit 模式取 git 暂存区
+function gitStagedFiles() {
+  let files = run('git', ['diff', '--cached', '--name-only', '--diff-filter=ACM']).split('\n').map(s => s.trim()).filter(Boolean);
+  if (!files.length) files = run('git', ['diff', '--cached', '--name-only']).split('\n').map(s => s.trim()).filter(Boolean);
+  return files.filter(f => fs.existsSync(f));
+}
+
+function changedSourceFiles() {
+  if (PRE_COMMIT) {
+    const staged = gitStagedFiles();
+    if (staged.length) return staged.filter(f => CFG.sourceExts.includes(path.extname(f)) && !CFG.testPathRe.test(f) && !CFG.ignoreDirRe.test(f));
+    return [];
+  }
+  const changed = gitChangedFiles();
+  if (changed && changed.length) {
+    return changed.filter(f => CFG.sourceExts.includes(path.extname(f)) && !CFG.testPathRe.test(f) && !CFG.ignoreDirRe.test(f));
+  }
+  return walkSourceFiles(process.cwd());
+}
+
 function walkSourceFiles(dir, out = []) {
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (_) { return out; }
@@ -84,18 +131,9 @@ function walkSourceFiles(dir, out = []) {
     if (e.name.startsWith('.') || CFG.ignoreDirRe.test(e.name)) continue;
     const p = path.join(dir, e.name);
     if (e.isDirectory()) walkSourceFiles(p, out);
-    else if (CFG.sourceExts.includes(path.extname(e.name))) out.push(p);
+    else if (CFG.sourceExts.includes(path.extname(e.name)) && !CFG.testPathRe.test(p.replace(/\\/g, '/'))) out.push(p);
   }
   return out;
-}
-
-// 生产代码变更文件（测试/文档豁免）
-function changedSourceFiles() {
-  const changed = gitChangedFiles();
-  if (changed && changed.length) {
-    return changed.filter(f => CFG.sourceExts.includes(path.extname(f)) && !CFG.testPathRe.test(f) && !CFG.ignoreDirRe.test(f));
-  }
-  return walkSourceFiles(process.cwd());
 }
 
 // ---------------------------------------------------------------------------
@@ -189,6 +227,7 @@ function hasDocBelow(lines, start) {
 }
 
 function gateCodeShape() {
+  const startFails = failures;
   const files = changedSourceFiles();
   if (!files.length) { log('[gate] 无变更的生产代码文件，跳过 铁律3/4/5/9 代码闸门'); return; }
   log(`扫描 ${files.length} 个生产代码文件`);
@@ -211,7 +250,7 @@ function gateCodeShape() {
       }
     }
   }
-  if (!failures) {
+  if (failures === startFails) {
     ok(3, `方法 ${methods} 个 / 类 ${classes} 个，行数均在限制内`);
     ok(4, `方法文档注释齐全（检查 ${methods} 个方法）`);
   }
@@ -222,6 +261,7 @@ function gateCodeShape() {
 // 铁律 5：空 catch / 裸 except（行扫描 + 括号平衡）
 // ---------------------------------------------------------------------------
 function gateEmptyCatch() {
+  const startFails = failures;
   const files = changedSourceFiles();
   for (const file of files) {
     let text;
@@ -229,9 +269,15 @@ function gateEmptyCatch() {
     const lines = text.split(/\r?\n/);
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (/\bcatch\s*\([^)]*\)\s*\{/.test(line)) {
-        // 找到匹配的闭括号，检查函数体是否为空
-        let depth = 0, j = i;
+      if (/\bcatch\s*\([^)]*\)/.test(line)) {
+        // 找到 catch 后的首个 {（允许换行，如 catch (e) 换行后 { 的空块）
+        let braceLine = -1;
+        for (let k = i; k < Math.min(i + 5, lines.length); k++) {
+          if (lines[k].includes('{')) { braceLine = k; break; }
+        }
+        if (braceLine === -1) continue;
+        // 括号匹配，检查函数体是否为空
+        let depth = 0, j = braceLine;
         const body = [];
         let started = false;
         for (; j < lines.length; j++) {
@@ -239,7 +285,7 @@ function gateEmptyCatch() {
           const c = (lines[j].match(/\}/g) || []).length;
           if (!started && o > 0) { started = true; }
           depth += o - c;
-          if (started && j > i) body.push(lines[j].trim());
+          if (started && j > braceLine) body.push(lines[j].trim());
           if (started && depth <= 0) break;
         }
         const nonComment = body.filter(l => l !== '' && !l.startsWith('//') && !l.startsWith('*') && !l.startsWith('/*'));
@@ -251,13 +297,14 @@ function gateEmptyCatch() {
       }
     }
   }
-  ok(5, '未发现空 catch / 裸 except');
+  if (failures === startFails) ok(5, '未发现空 catch / 裸 except');
 }
 
 // ---------------------------------------------------------------------------
 // 铁律 9：SQL 拼接 / 硬编码密钥
 // ---------------------------------------------------------------------------
 function gateSecurity() {
+  const startFails = failures;
   const sqlConcatRe = /["'`][^"'`]*(select|insert|update|delete|from|where)[^"'`]*["'`]\s*\+|f["'][^"']*(select|insert|update|delete)[^"']*["']|["'`]select[^"'`]*["'`]\s*%/gi;
   const secretRe = /(api[_-]?key|secret|passwd|password)\s*[:=]\s*["'][A-Za-z0-9_\-]{8,}["']|sk-[A-Za-z0-9]{16,}/gi;
   const files = changedSourceFiles();
@@ -270,7 +317,7 @@ function gateSecurity() {
       if (secretRe.test(line)) fail(9, `疑似硬编码密钥/口令: ${file}:${idx + 1}: ${line.trim().slice(0, 80)}`);
     });
   }
-  ok(9, '未发现 SQL 拼接 / 硬编码密钥');
+  if (failures === startFails) ok(9, '未发现 SQL 拼接 / 硬编码密钥');
 }
 
 // ---------------------------------------------------------------------------
@@ -331,6 +378,10 @@ function main() {
   log(`phase=${phase} 起始`);
   if (phase === 'review') {
     gateReviewEvidence();
+  } else if (phase === 'precommit') {
+    gateCodeShape();
+    gateEmptyCatch();
+    gateSecurity();
   } else {
     gateModuleLines();
     gateCodeShape();

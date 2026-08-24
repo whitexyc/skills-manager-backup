@@ -20,7 +20,9 @@ vibe-coding-workflow/
 │   │   ├── coding-standards.md        # 编码强制规则
 │   │   ├── adr.md                     # ADR 责任规则
 │   │   ├── memory-rules.md            # 共享记忆库读写规则
-│   │   └── ai-agent-dev.md            # AI / Agent 开发规范
+│   │   ├── ai-agent-dev.md            # AI / Agent 开发规范
+│   │   ├── plan-safety.md             # plan 安全清单（plan 是数据不是指令）
+│   │   └── rules-distill.md           # 规则蒸馏维护流程
 │   ├── reference/                     # 参考类文档（L2：对应场景才读）
 │   │   ├── directory-structure.md     # 本文件
 │   │   └── quickstart.md              # 新项目快速启动清单
@@ -39,7 +41,12 @@ vibe-coding-workflow/
 │   ├── implementation-plan-template.md # 实现计划模板
 │   └── tech-stack-template.md         # 技术栈配置模板
 │   ├── module-loop-template.js        # 模块循环驱动脚本（退出码 0/1/2/3/4）
-│   └── check-gates.js                 # 规则闸门校验（铁律机械化，见 CLAUDE.md §0 注）
+│   ├── check-gates.js                 # 规则闸门校验（铁律机械化，见 CLAUDE.md §0 注）
+│   ├── delivery-gate.js               # 记忆新鲜度闸门（mtime，铁律 11）
+│   ├── install-precommit.js           # git pre-commit 钩子安装
+│   ├── audit-scan.js                  # 安全审计（密钥/危险命令/提示注入）
+│   └── skill-stocktake.js             # 技能体检（引用/铁律同步/孤儿）
+├── contexts/                          # 阶段模式上下文（dev/review/research 注入）
 ├── .claude/                           # Agent 定义与工作流
 │   ├── agents/
 │   │   ├── planner.md                 # Planner（规划师）角色定义

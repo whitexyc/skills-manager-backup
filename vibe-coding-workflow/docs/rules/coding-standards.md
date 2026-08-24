@@ -31,6 +31,7 @@ public UserVO register(RegisterRequest request) {
 - **严禁在 Controller 层捕获异常后不做处理**
 - **所有业务异常必须继承统一的 `BusinessException`**
 - **全局异常处理器必须记录完整的堆栈信息到日志**
+- **豁免（铁律 5）**：确定性脚本（闸门/审计类）对文件 I/O 的容错 catch，只要带注释说明即为合法，不属于吞异常
 
 ```java
 // 正确示例

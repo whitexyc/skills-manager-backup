@@ -7,6 +7,7 @@
 
 - **读**：每次入场/开工，先读三件套（顺序：project-context → file-index → activity-log），状态新鲜度优先，任何阶段不得跳过。
 - **写**：阶段退出前必须完成本阶段强制写入；交接消息附「已更新记忆库文件清单」，否则下一阶段不得启动。
+- **新鲜度（mtime 闸门）**：三件套必须在最近 `GATE_MEMORY_HOURS`（默认 24h）内更新过——`templates/delivery-gate.js` 用文件修改时间确定性校验（关键文件：project-context.md、agent-activity-log.md），超窗即阻塞（模块循环退出码 4）。
 
 ## 1. 强制项（每模块必做，阶段退出前置）
 
