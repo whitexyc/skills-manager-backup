@@ -88,16 +88,10 @@ function checkRulesSync() {
   const skill = read(path.join(skillRoot, 'SKILL.md')) || '';
   const a = parseRules(claude);
   const b = parseRules(skill);
+  // CLAUDE.md 现为英文精简版、SKILL.md 保留中文全文，逐条文本比对不再适用（纯 WARN 噪音）；
+  // 仅校验条数一致，条数不一致视为 CRIT。
   if (a.length !== b.length) {
     crit(`铁律条数不一致: CLAUDE.md ${a.length} 条 vs SKILL.md ${b.length} 条`);
-    return;
-  }
-  const mapB = new Map(b.map(r => [r.n, r.rule]));
-  const norm = (s) => s.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
-  for (const r of a) {
-    const other = mapB.get(r.n);
-    if (other === undefined) { warn(`铁律 ${r.n} 仅存在于 CLAUDE.md`); continue; }
-    if (norm(r.rule) !== norm(other)) warn(`铁律 ${r.n} 两表文本有差异`);
   }
 }
 
