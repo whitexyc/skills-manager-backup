@@ -25,6 +25,13 @@ Developer 是工作流的**执行核心**。接收 Planner 输出的开发计划
 
 ---
 
+> **调度模型（先读）**：你是被编排者（主会话）按模块循环派发的子 agent。编排脚本
+> `templates/module-loop-template.js` 轮询你的产出文件作为阶段完成信号——
+> **产出文件写好 + 三记忆文件含本模块记录 = 本阶段完成**，无需等待其他角色的消息。
+> 角色间通知在环境支持 SendMessage 时使用；不支持时由编排者轮询产出文件并路由下一阶段。
+> 各角色产出：Planner=plan.md+acceptance-criteria.md · Developer=changelog.md ·
+> Reviewer=review-report.md · Tester=test-report.md。
+
 ## 📦 可用技能 (Available Skills)
 
 你可以在以下场景调用对应的 Skill（通过 `Skill` 工具，参数 `skill` 为技能名称，`args` 为场景描述）：
@@ -32,10 +39,9 @@ Developer 是工作流的**执行核心**。接收 Planner 输出的开发计划
 | 场景 | 调用 Skill | 用途 |
 |------|-----------|------|
 | 涉及前端 UI / 组件设计时 | `frontend-design` | 配色、排版、布局的专业设计指导 |
-| 需要隔离开发环境时 | `using-git-worktrees` | 创建隔离的 Git Worktree，多分支并行开发不冲突 |
-| 按 plan.md 执行多步骤任务时 | `executing-plans` | 加载计划、审查、执行所有任务、报告完成 |
 | 处理 Git 合并冲突时 | `resolving-merge-conflicts` | 分析冲突双方内容，提出解决方案 |
-| 收到 Tester 的测试失败反馈后 | `systematic-debugging` | 系统化归因调试：假设→验证→根因→修复 |
+| 测试先行开发时 | `tdd` | 先写测试、观察失败、写最少代码通过、重构 |
+| 追求最小可行实现时 | `ponytail` | 最懒可用方案：YAGNI、标准库优先、一行胜五十行 |
 
 ---
 

@@ -22,6 +22,13 @@ Planner 是整个 Vibe Coding 工作流的**起点和指挥中枢**。负责将�
 
 ---
 
+> **调度模型（先读）**：你是被编排者（主会话）按模块循环派发的子 agent。编排脚本
+> `templates/module-loop-template.js` 轮询你的产出文件作为阶段完成信号——
+> **产出文件写好 + 三记忆文件含本模块记录 = 本阶段完成**，无需等待其他角色的消息。
+> 角色间通知在环境支持 SendMessage 时使用；不支持时由编排者轮询产出文件并路由下一阶段。
+> 各角色产出：Planner=plan.md+acceptance-criteria.md · Developer=changelog.md ·
+> Reviewer=review-report.md · Tester=test-report.md。
+
 ## 📦 可用技能 (Available Skills)
 
 你可以在以下场景调用对应的 Skill（通过 `Skill` 工具，参数 `skill` 为技能名称，`args` 为场景描述）：
@@ -29,7 +36,6 @@ Planner 是整个 Vibe Coding 工作流的**起点和指挥中枢**。负责将�
 | 场景 | 调用 Skill | 用途 |
 |------|-----------|------|
 | 需求分析和功能探索阶段 | `brainstorming` | 头脑风暴，探索用户真实需求、边界条件和设计方案 |
-| 方案设计和架构决策时 | `grill-with-docs` | 拷问方案细节，同时自动生成 ADR 和术语表 |
 | 需要压力测试自己的想法时 | `grilling` | 像审查员一样逐个追问，直到所有细节厘清 |
 
 ---
@@ -91,7 +97,6 @@ Planner 可根据模块复杂度**为同一角色创建多个 Agent 实例**：
 > - 实现偏差超过 50% 时，用实际数据校准下一模块计划
 
 > - `plan.md`（简略版）：适用于简单模块（≤ 100 行），使用 `templates/spec-template.md` 的结构概要
-> - `plan.md`（简略版）：适用于简单模块（≤ 100 行），使用 CLAUDE.md 第 12 节的结构概要
 > - `spec-template.md`（详细版）：适用于复杂模块（> 100 行或多子任务），包含 BDD 场景、依赖关系图、审批记录等
 > - Planner 根据模块复杂度选择使用哪个模板，产出文件统一命名为 `plan.md`
 > - 模板文件位于 `templates/spec-template.md`

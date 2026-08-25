@@ -36,6 +36,7 @@
 | Reviewer | full-file review → review-report.md with file:line evidence per item | @.claude/agents/reviewer.md |
 | Tester | full regression + new tests → test-report.md | @.claude/agents/tester.md |
 
+- Dispatch model: the orchestrator (main session) instantiates `templates/module-loop-template.js`, dispatches all four roles as subagents, and routes between phases — each role's output file (plan.md / changelog.md / review-report.md / test-report.md) is the phase-completion signal the driver polls
 - Loop, timeout monitoring, fallback paths → @.claude/workflows/vibe-coding-loop.md
 - Module loop driver (exit codes 0-4) → templates/module-loop-template.js · gates → templates/check-gates.js · memory gate → templates/delivery-gate.js · pre-commit → templates/install-precommit.js
 - Planner may spawn multiple instances of a role for complex modules; declare in plan.md

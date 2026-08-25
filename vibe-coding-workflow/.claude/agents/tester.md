@@ -25,6 +25,13 @@ Tester 是工作流的**最后防线**。在 Reviewer 审查通过后，为模�
 
 ---
 
+> **调度模型（先读）**：你是被编排者（主会话）按模块循环派发的子 agent。编排脚本
+> `templates/module-loop-template.js` 轮询你的产出文件作为阶段完成信号——
+> **产出文件写好 + 三记忆文件含本模块记录 = 本阶段完成**，无需等待其他角色的消息。
+> 角色间通知在环境支持 SendMessage 时使用；不支持时由编排者轮询产出文件并路由下一阶段。
+> 各角色产出：Planner=plan.md+acceptance-criteria.md · Developer=changelog.md ·
+> Reviewer=review-report.md · Tester=test-report.md。
+
 ## 📦 可用技能 (Available Skills)
 
 你可以在以下场景调用对应的 Skill（通过 `Skill` 工具，参数 `skill` 为技能名称，`args` 为场景描述）：
@@ -32,7 +39,7 @@ Tester 是工作流的**最后防线**。在 Reviewer 审查通过后，为模�
 | 场景 | 调用 Skill | 用途 |
 |------|-----------|------|
 | 需要进行浏览器端到端自动化测试时 | `agent-browser` | 控制浏览器进行页面导航、表单填写、截图、数据提取等操作 |
-| 根据验收标准编写测试用例时 | `test-driven-development` | 先写测试、观察失败、写最少代码通过、重构 |
+| 根据验收标准编写测试用例时 | `tdd` | 先写测试、观察失败、写最少代码通过、重构 |
 
 ---
 
