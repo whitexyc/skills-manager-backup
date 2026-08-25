@@ -32,7 +32,7 @@ vibe-coding-workflow/
 │   ├── api/                           # API 接口文档
 │   ├── requirements/                  # 需求文档（Planner 输出）
 │   └── test-reports/                  # 测试报告（Tester 输出）
-├── templates/                         # 模板 + 驱动脚本目录（权威来源：8 模板 + 2 脚本）
+├── templates/                         # 模板 + 驱动脚本目录（权威来源：9 模板 + 6 脚本）
 │   ├── spec-template.md               # 模块规格模板
 │   ├── acceptance-criteria.md         # 验收标准模板
 │   ├── review-checklist.md            # 审查清单模板
@@ -40,7 +40,8 @@ vibe-coding-workflow/
 │   ├── changelog-template.md          # 变更日志模板
 │   ├── test-report-template.md        # 测试报告模板
 │   ├── implementation-plan-template.md # 实现计划模板
-│   └── tech-stack-template.md         # 技术栈配置模板
+│   ├── tech-stack-template.md         # 技术栈配置模板
+│   ├── dispatch-prompt-template.md    # 编排者派发提示词模板（四角色 + 回退重派发）
 │   ├── module-loop-template.js        # 模块循环驱动脚本（退出码 0/1/2/3/4）
 │   ├── check-gates.js                 # 规则闸门校验（铁律机械化，见 CLAUDE.md §0 注）
 │   ├── delivery-gate.js               # 记忆新鲜度闸门（mtime，铁律 11）

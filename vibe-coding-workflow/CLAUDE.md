@@ -56,6 +56,7 @@
 | Project bootstrap | @docs/reference/quickstart.md |
 | Env errors / permission blocks / Windows quirks | environment-troubleshooting.md |
 | Security audit (secrets/dangerous commands/injection) | node templates/audit-scan.js (--with-md adds .md injection scan) |
+| Dispatching role subagents (orchestrator) | @templates/dispatch-prompt-template.md |
 | Commits / branches / versions | @.claude/workflows/vibe-coding-loop.md §6 |
 | Starting dev from a plan | @docs/rules/plan-safety.md |
 | Phase-mode context (dev/review/research) | @contexts/dev.md · @contexts/review.md · @contexts/research.md |
