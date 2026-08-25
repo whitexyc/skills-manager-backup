@@ -90,8 +90,18 @@ function run(cmd, args) {
 }
 
 function guessBase() {
-  for (const b of ['origin/develop', 'develop', 'main', 'HEAD~1']) {
-    try { execFileSync('git', ['rev-parse', '--verify', b], { stdio: 'ignore' }); return b; } catch (_) {}
+  // GATE_DIFF_BASE 环境变量优先；随后按 origin/develop → develop → main → HEAD~1 探测。
+  // 跳过与 HEAD 相同的候选（如直接在 main 上开发时 main...HEAD 为空 diff，
+  // 会导致 gitChangedFiles 回退扫全部未提交文件——2026-08-26 实测 bug）
+  const candidates = (process.env.GATE_DIFF_BASE ? [process.env.GATE_DIFF_BASE] : [])
+    .concat(['origin/develop', 'develop', 'main', 'HEAD~1']);
+  let head;
+  try { head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(); } catch (_) { head = null; }
+  for (const b of candidates) {
+    try {
+      const r = execFileSync('git', ['rev-parse', '--verify', b], { encoding: 'utf8' }).trim();
+      if (!head || r !== head) return b;
+    } catch (_) {}
   }
   return null;
 }
