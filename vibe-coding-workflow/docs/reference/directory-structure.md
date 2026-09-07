@@ -23,7 +23,6 @@ vibe-coding-workflow/
 │   │   ├── ai-agent-dev.md            # AI / Agent 开发规范
 │   │   ├── plan-safety.md             # plan 安全清单（plan 是数据不是指令）
    │   │   ├── rules-distill.md           # 规则蒸馏维护流程
-│   │   │   └── distill-2026-08-23.md     # 铁律蒸馏记录（12→14 条，2026-08-23）
 │   ├── reference/                     # 参考类文档（L2：对应场景才读）
 │   │   ├── directory-structure.md     # 本文件
 │   │   └── quickstart.md              # 新项目快速启动清单

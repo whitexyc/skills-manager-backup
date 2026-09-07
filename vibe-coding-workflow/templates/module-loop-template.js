@@ -9,9 +9,15 @@
  *       .claude/workflows/vibe-coding-loop.md §4 为准（驱动方负责读取角色文档并执行）。
  *
  * 用法：
- *   node templates/module-loop-template.js <模块编号> <模块名称>
+ *   node templates/module-loop-template.js <模块编号> <模块名称> [--no-resume]
  *   例：node templates/module-loop-template.js 024 knowledge-panel
  *        → 驱动 specs/module-024-knowledge-panel/ 的 Plan→Develop→Review→Test 四阶段
+ *
+ * 断点续跑（默认开启）：启动时检测各阶段完成信号，已完成阶段跳过、从中断处继续——
+ *   PLAN=plan.md+acceptance-criteria.md 存在 · DEVELOP=changelog.md 存在 ·
+ *   REVIEW=review-report.md 结论通过 · TEST=test-report.md 结论通过且三记忆含本模块。
+ *   报告存在但结论非通过时，旧报告自动改名 *.round-<时间戳>.md 让位（存在性=完成信号），
+ *   配合派发验尸规则（module-011）先清残留再重派。--no-resume 强制全流程重跑。
  *
  * 退出码：
  *   0 = 四阶段全部完成（产出就绪 + 三记忆文件校验通过）
@@ -163,6 +169,67 @@ function runDeliveryGate() {
 }
 
 // ---------------------------------------------------------------------------
+// 断点续跑：启动时检测各阶段完成信号（存在性=完成信号的设计推论）
+// ---------------------------------------------------------------------------
+const RESUME = !args.includes('--no-resume');
+
+// 报告结论解析：取首条含「结论:」的行——含「通过」不含「不通过」=pass；反之=fail；
+// 两者并存（模板未填）或无该行=unknown（按未完成处理，保守方向）
+function reportVerdict(f) {
+  if (!fs.existsSync(f)) return 'missing';
+  for (const line of fs.readFileSync(f, 'utf8').split('\n')) {
+    if (!/结论[::]/.test(line)) continue;
+    const hasPass = /通过/.test(line);
+    const hasFail = /不通过/.test(line);
+    if (hasPass && !hasFail) return 'pass';
+    if (hasFail && !hasPass) return 'fail';
+  }
+  return 'unknown';
+}
+
+// 三记忆文件是否都已含本模块标识（verifyMemory 的非致命版，用于 TEST 完成判定）
+function memoryHasModule() {
+  const MODULE_TOKEN = `module-${MODULE_NUM}`;
+  return Object.values(MEMORY).every((f) => {
+    if (!fs.existsSync(f)) return false;
+    return fs.readFileSync(f, 'utf8').split('\n').some((line) => line.includes(MODULE_TOKEN));
+  });
+}
+
+// 信号存在但结论非通过 → 旧报告改名让位（waitForDocs 以存在性为信号，不复位会秒过）
+function resetStaleReport(phase, f) {
+  if (!fs.existsSync(f)) return;
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const renamed = f.replace(/\.md$/, `.round-${ts}.md`);
+  fs.renameSync(f, renamed);
+  log(phase, `[resume] 旧报告结论非通过，改名让位: ${path.basename(renamed)}（重驱动前先按派发验尸规则清理残留）`);
+}
+
+function detectResume() {
+  if (!RESUME) { log('RESUME', '--no-resume：忽略既有信号，全流程重跑'); return { plan: false, develop: false, review: false, test: false }; }
+  const planDone = fs.existsSync(path.join(SPEC_DIR, 'plan.md')) && fs.existsSync(path.join(SPEC_DIR, 'acceptance-criteria.md'));
+  const developDone = fs.existsSync(path.join(SPEC_DIR, 'changelog.md'));
+  const reviewReport = path.join(SPEC_DIR, 'review-report.md');
+  const testReport = path.join(SPEC_DIR, 'test-report.md');
+  const reviewVerdict = reportVerdict(reviewReport);
+  const testVerdict = reportVerdict(testReport);
+  log('RESUME', `断点续跑检测: PLAN=${planDone ? '完成' : '未完成'} DEVELOP=${developDone ? '完成' : '未完成'} REVIEW=${reviewVerdict} TEST=${testVerdict}${memoryHasModule() ? '+记忆✓' : '+记忆✗'}`);
+  if (planDone && developDone && reviewVerdict === 'pass' && testVerdict === 'pass' && memoryHasModule()) {
+    console.error(`退出码 0 前置提示: ${MODULE} 四阶段信号均已满足，无需重跑（确认无误则本模块已完成；如需强制重跑用 --no-resume）`);
+    process.exit(0);
+  }
+  // 为重驱动复位过期信号（结论非通过的报告）
+  if (developDone && reviewVerdict !== 'pass') resetStaleReport('RESUME', reviewReport);
+  if (reviewVerdict === 'pass' && testVerdict !== 'pass') resetStaleReport('RESUME', testReport);
+  return {
+    plan: planDone,
+    develop: developDone,
+    review: reviewVerdict === 'pass',
+    test: testVerdict === 'pass' && memoryHasModule(),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // 阶段驱动（各阶段内容以 workflow §4.1-4.4 为准，此处仅做驱动与校验）
 // ---------------------------------------------------------------------------
 function runPhase(name, roleDoc, docs, limitKey) {
@@ -185,24 +252,29 @@ function main() {
       ` | escalated=${config.max_reviewer_rounds_escalated}/${config.max_tester_retry_escalated}`
   );
 
-  runPhase('PLAN', '.claude/agents/planner.md', [
+  const sig = detectResume();
+  if (sig.plan) log('PLAN', '[resume] 信号已满足，跳过');
+  else runPhase('PLAN', '.claude/agents/planner.md', [
     path.join(SPEC_DIR, 'plan.md'),
     path.join(SPEC_DIR, 'acceptance-criteria.md'),
   ], 'planner_retry');
 
-  runPhase('DEVELOP', '.claude/agents/developer.md', [
+  if (sig.develop) log('DEVELOP', '[resume] 信号已满足，跳过');
+  else runPhase('DEVELOP', '.claude/agents/developer.md', [
     path.join(SPEC_DIR, 'changelog.md'),
   ], 'developer_retry');
 
   runGates('DEVELOP');
 
-  runPhase('REVIEW', '.claude/agents/reviewer.md', [
+  if (sig.review) log('REVIEW', '[resume] 信号已满足，跳过');
+  else runPhase('REVIEW', '.claude/agents/reviewer.md', [
     path.join(SPEC_DIR, 'review-report.md'),
   ], 'reviewer_rounds');
 
   runGates('REVIEW');
 
-  runPhase('TEST', '.claude/agents/tester.md', [
+  if (sig.test) log('TEST', '[resume] 信号已满足，跳过');
+  else runPhase('TEST', '.claude/agents/tester.md', [
     path.join(SPEC_DIR, 'test-report.md'),
   ], 'tester_retry');
 

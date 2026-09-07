@@ -380,6 +380,10 @@ function gateReviewEvidence() {
   if (evidence.length < CFG.reviewEvidenceMin) {
     fail('Review', `${latest} 证据不足：文件:行号 引用仅 ${evidence.length} 处 < ${CFG.reviewEvidenceMin}（每项 ✅/❌ 必须附证据）`);
   } else ok('Review', `${latest} 含 ${evidence.length} 处 文件:行号 证据`);
+  // 结论必须置于报告最前（module-014 报告 lint）：读报告的人第一眼要看到裁决
+  const headLines = text.split('\n').slice(0, 15).join('\n');
+  if (!/结论[::]/.test(headLines)) fail('Review', `${latest} 前 15 行未见「结论:」——审查结论必须置于报告最前`);
+  else ok('Review', `${latest} 结论位于报告前部`);
 }
 
 // ---------------------------------------------------------------------------

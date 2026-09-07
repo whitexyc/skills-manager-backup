@@ -7,14 +7,14 @@ description: >
   custom code, native platform features before dependencies, one line before
   fifty. Supports intensity levels: lite, full (default), ultra. Use on ANY
   coding task: writing, adding, refactoring, fixing, reviewing, or designing
-  code, and choosing libraries or dependencies. Also use whenever the user says
-  "ponytail", "be lazy", "lazy mode", "simplest solution", "minimal solution",
-  "yagni", "do less", or "shortest path", or complains about over-engineering,
-  bloat, boilerplate, or unnecessary dependencies. Do NOT use for non-coding
-  requests (general knowledge, prose, translation, summaries, recipes).
+  code, and choosing libraries or dependencies. Also use whenever the user
+  says "ponytail", "be lazy", "lazy mode", "simplest solution", "minimal
+  solution", "yagni", "do less", or "shortest path", or complains about
+  over-engineering, bloat, boilerplate, or unnecessary dependencies. Do NOT
+  use for non-coding requests (general knowledge, prose, translation,
+  summaries, recipes).
 argument-hint: "[lite|full|ultra]"
 license: MIT
-disable-model-invocation: false
 ---
 
 # Ponytail

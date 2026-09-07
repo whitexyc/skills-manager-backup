@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * audit-scan.js — 安全审计脚本（AgentShield 思路的轻量本地版，module-004）
+ * audit-scan.js — 安全审计脚本（AgentShield 思路的轻量本地版）
  * =============================================================================
  * 用途：把「审计 agent/脚本/配置的安全面」做成确定性检查——密钥泄露、危险命令、
  *       提示注入模式。纯 Node 零依赖，风格对齐 check-gates.js / delivery-gate.js。

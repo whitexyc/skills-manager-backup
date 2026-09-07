@@ -1,6 +1,6 @@
 # 开发模式上下文（Developer 阶段注入）
 
-> 源：ECC contexts/dev.md（module-002 吸收，按本技能铁律适配）。
+> 源：ECC contexts/dev.md。
 
 模式：实现
 

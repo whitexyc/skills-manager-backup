@@ -29,6 +29,16 @@
 
 日统计、工作量周报、归档（不阻塞流程）。
 
+## 3.5 热区/冷区（防记忆无界增长）
+
+85 模块实测教训：project-context 涨到 114KB、activity-log 涨到 297KB 后，"入场先读"在物理上已不可执行。规则：
+
+- **project-context.md 是热区（目标 ≤30KB）**：只放当前状态——概述、已完成模块清单（每行：编号+短名+版本+日期+状态；**明细禁入名称列**）、ADR 索引（1 行/条，详情在 docs/adr/）、当前迭代状态（只留本迭代条目）
+- **agent-activity-log.md 是热区**：每模块每阶段 1 行，**单行 ≤200 字符**；超长结论写进 specs/ 对应报告或 `memory/logs/<role>/`，此行只留摘要+指针
+- **冷区 = `memory/archive/`**：按内容类型归档（`activity-log-日期.md` / `project-context-日期.md` / `adr-rows-日期.md` / `module-rows-日期.md`），只读不写，头部注明切分来源与日期
+- **归档时机与工具**：delivery-gate 机械校验热区尺寸（>30KB 警告、>50KB 阻塞，GATE_HOT_*_KB 可调），超限即归档。机械化：`node templates/archive-rotate.js [--dry-run] [--keep-days 14] [--compact-chars 500] [--pc]`——日期旋转（早于 keep-days 的日期行整行入档）+ 超长行压缩（>`compact-chars` 的行原文入档、热区留 ≤160 字符存根+指针）；**--pc 同时处理 project-context**：>400 字符的「✅ 完成/模块清单/ADR」行原文入档、留 120 字符存根，🔵 进行中/规划行保持完整；两文件统一写前守恒与逐行去向自校验、.bak、归档名避让（module-017）
+- 入场只读热区；需要历史时按热区内的指针进冷区，**默认不读**
+
 ## 4. 强制条款
 
 > 任一阶段退出前必须完成本阶段强制记忆库写入，交接 SendMessage 中附「已更新记忆库文件清单」，否则下一阶段不得启动。

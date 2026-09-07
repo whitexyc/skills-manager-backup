@@ -2,6 +2,8 @@
 
 > 📋 本文件记录所有 Agent 的**按模块按阶段**活动，是阶段交接的硬性校验之一。
 > 粒度规则：**每模块每阶段 1 行**（PLAN/CODE/REVIEW/TEST 交接各 1 行），不逐动作记录。
+> **单行 ≤200 字符**：超长结论写 specs/ 对应报告或 `memory/logs/<role>/`，本行只留摘要+指针。
+> 历史迭代归档到 `memory/archive/`（见 `docs/rules/memory-rules.md` §3.5），入场只读热区。
 > 新 Agent 入场时，先读本文件了解各模块各阶段的最近进展。
 
 ---

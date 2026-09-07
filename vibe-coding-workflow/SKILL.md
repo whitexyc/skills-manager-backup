@@ -9,7 +9,7 @@ description: Use when setting up a multi-agent software project with Planner/Dev
 
 ## 铁律（违反 = 阶段不通过，无需提醒）
 
-> 与项目 `CLAUDE.md §0` 同步维护——修改须两处同步。验证方式列已部分脚本化：`templates/check-gates.js` 在 DEVELOP/REVIEW 阶段自动执行，`templates/delivery-gate.js` 在 TEST 后校验记忆 mtime 新鲜度（均失败退出码 4，可经 config.gates.enabled=false 关闭）。
+> 与项目 `CLAUDE.md §0` 同步维护——修改须两处同步。验证方式列已部分脚本化：`templates/check-gates.js` 在 DEVELOP/REVIEW 阶段自动执行，`templates/delivery-gate.js` 在 TEST 后校验记忆新鲜度（mtime 窗口 + 关键文件须含本次模块标识，防仅刷新时间戳穿透；均失败退出码 4，可经 config.gates.enabled=false 关闭）。
 
 | # | 铁律 | 验证方式 | 违反后果 |
 |---|------|----------|----------|
@@ -23,7 +23,7 @@ description: Use when setting up a multi-agent software project with Planner/Dev
 | 8 | INFO 日志（入参摘要+耗时）；异常含 request_id；禁打敏感信息 | 日志扫描 | Review 驳回 |
 | 9 | 禁 SQL 拼接、禁硬编码密钥/明文密码 | semgrep/gitleaks | Review 驳回 |
 | 10 | 架构变更走 ADR：发现者写 → Planner 审批 → 更新索引 | docs/adr/ 核对 | 不算完成 |
-| 11 | 入场先读记忆三件套，阶段退出前必写 | verifyMemory + delivery-gate(mtime) | 退出码 3/4 |
+| 11 | 入场先读记忆三件套，阶段退出前必写 | verifyMemory + delivery-gate（mtime+模块标识） | 退出码 3/4 |
 | 12 | 交接前自跑 lint+测试贴输出；文档用 templates/ 模板 | 内容校验 | 不算完成 |
 | 13 | 脚本类工具必须纯 Node 内置模块 + 头部用途注释（用法/退出码/环境变量） | 代码检查 | 不算完成 |
 | 14 | 闸门/审计类脚本必须配套可机械断言的夹具用例 | 夹具矩阵 | 不算完成 |
@@ -73,10 +73,10 @@ description: Use when setting up a multi-agent software project with Planner/Dev
 - 跳过模板自创格式；Planner 写代码；超 plan 范围加功能
 - Reviewer 只看 diff 不看全文件；Tester 跳过回归只跑新测试
 - changelog 只列文件名不写设计说明；声称测试通过但不贴命令输出
-- 并行开发多个模块；入场不读记忆三件套；交接不写记忆库
+- 写代码角色并行开发多个模块（只读规划可与当前模块测试并行，见 workflows §1.2）；入场不读记忆三件套；交接不写记忆库
 
 ## 相关文件
 
 - 环境排查 → `environment-troubleshooting.md`
 - 记忆库读写规则 → `docs/rules/memory-rules.md`
-- 规则闸门 → `templates/check-gates.js`；记忆闸门 → `templates/delivery-gate.js`；pre-commit 安装 → `templates/install-precommit.js`；安全审计 → `templates/audit-scan.js`；技能体检 → `templates/skill-stocktake.js`
+- 规则闸门 → `templates/check-gates.js`；记忆闸门（mtime+标识+热区尺寸）→ `templates/delivery-gate.js`；热区归档旋转 → `templates/archive-rotate.js`；pre-commit 安装 → `templates/install-precommit.js`；安全审计 → `templates/audit-scan.js`；技能体检 → `templates/skill-stocktake.js`

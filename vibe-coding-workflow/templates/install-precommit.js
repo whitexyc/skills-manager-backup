@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * install-precommit.js — 安装 git pre-commit 钩子（module-001）
+ * install-precommit.js — 安装 git pre-commit 钩子
  * =============================================================================
  * 用途：把 check-gates.js 的 precommit 模式挂到项目 .git/hooks/pre-commit，
  *       实现「提交前自动代码闸门」（DSH 无 Claude Code hooks 的等价替代）。
@@ -47,7 +47,7 @@ function main() {
   const gates = gatesPath.replace(/\\/g, '/');
   const script =
     '#!/bin/sh\n' +
-    '# installed by vibe-coding-workflow install-precommit.js (module-001)\n' +
+    '# installed by vibe-coding-workflow install-precommit.js\n' +
     `"${nodeCmd}" "${gates}" precommit || exit 1\n`;
   fs.writeFileSync(hookPath, script, { mode: 0o755 });
   console.log(`[install-precommit] 已安装: ${hookPath}`);

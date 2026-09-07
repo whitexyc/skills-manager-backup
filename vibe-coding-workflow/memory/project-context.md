@@ -3,6 +3,7 @@
 > 📋 本文件是 Vibe Coding 工作流的共享记忆库，所有 Agent（Planner、Developer、Reviewer、Tester）共享使用。
 > 每次操作后由对应角色更新本文件，保持上下文同步。
 > **最后更新者请修改「最后更新」时间戳。**
+> **热区约束**：本文件只放当前状态，目标 ≤30KB——模块清单每行只留"编号+短名+版本+日期+状态"，ADR 索引 1 行/条，历史迭代明细与超长行归档到 `memory/archive/`（规则见 `docs/rules/memory-rules.md` §3.5）。
 
 ---
 

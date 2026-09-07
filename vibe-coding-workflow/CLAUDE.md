@@ -4,7 +4,7 @@
 > Progressive disclosure (L0/L1/L2, onboarding order in SKILL.md): do not read without a trigger. Full-document loading causes context rot.
 >
 > **Single source of truth**: detailed specs live in `docs/rules/`, `docs/reference/`, `.claude/`, `templates/`, `memory/`.
-> Keep the iron-rule COUNT in sync with the SKILL.md rule table (SKILL.md is the Chinese human-facing layer; its backup is `CLAUDE.zh-CN.backup.md`).
+> Keep the iron-rule COUNT in sync with the SKILL.md rule table (SKILL.md is the Chinese human-facing layer).
 
 ## 0. Iron Rules (violation = phase failure, no reminders needed)
 
@@ -20,12 +20,12 @@
 | 8 | INFO logs on key operations (args summary + result + duration); exceptions carry request_id; never log sensitive data | log scan | review rejected |
 | 9 | No SQL string concatenation (parameterize); no hardcoded secrets or plain passwords (BCrypt/Argon2) | semgrep / gitleaks | review rejected |
 | 10 | Architecture changes go through ADR: author writes → Planner approves → index updated | docs/adr/ audit | not done |
-| 11 | Memory trio: read on entry, write this module's record before phase exit | verifyMemory + delivery-gate (24h mtime freshness) | exit 3/4 |
+| 11 | Memory trio: read on entry, write this module's record before phase exit | verifyMemory + delivery-gate (24h mtime + module token in content) | exit 3/4 |
 | 12 | Self-run lint + tests and paste command output as evidence; deliverables use templates/ | changelog/report content check | not done |
 | 13 | Script tools use Node built-ins only + header comment (usage / exit codes / env vars) | code check | not done |
 | 14 | Gate/audit scripts ship mechanically assertable fixture cases | fixture matrix | not done |
 
-> Partially scripted: templates/check-gates.js runs at DEVELOP/REVIEW exit (rules 2/3/4/5/9/12 + review evidence); templates/delivery-gate.js validates memory mtime freshness after TEST (rule 11). Any failure → exit code 4. install-precommit.js wires git pre-commit interception. Disable via config.gates.enabled=false. Heuristic checks do not replace Review.
+> Partially scripted: templates/check-gates.js runs at DEVELOP/REVIEW exit (rules 2/3/4/5/9/12 + review evidence); templates/delivery-gate.js validates memory freshness after TEST (rule 11: mtime window + module token in critical memory files). Any failure → exit code 4. install-precommit.js wires git pre-commit interception. Disable via config.gates.enabled=false. Heuristic checks do not replace Review.
 
 ## 1. Roles & Loop (pointers)
 
@@ -56,10 +56,15 @@
 | Project bootstrap | @docs/reference/quickstart.md |
 | Env errors / permission blocks / Windows quirks | environment-troubleshooting.md |
 | Security audit (secrets/dangerous commands/injection) | node templates/audit-scan.js (--with-md adds .md injection scan) |
+| Deep security review (auth/input/secret surfaces) | @docs/rules/security-review.md |
+| Context bloat audit / before adding components | @docs/rules/context-budget.md |
+| Memory hot-zone oversized (rotate/archive) | node templates/archive-rotate.js (--dry-run; delivery-gate blocks >50KB) |
+| AI feature acceptance / eval design (graders, pass@k) | @docs/rules/eval-harness.md |
+| Iron-rule vs project-reality conflicts (adaptation registry) | @docs/rules/project-adaptations.md |
 | Dispatching role subagents (orchestrator) | @templates/dispatch-prompt-template.md |
 | Commits / branches / versions | @.claude/workflows/vibe-coding-loop.md §6 |
 | Starting dev from a plan | @docs/rules/plan-safety.md |
-| Phase-mode context (dev/review/research) | @contexts/dev.md · @contexts/review.md · @contexts/research.md |
+| Phase-mode context (dev/review/research/test) | @contexts/dev.md · @contexts/review.md · @contexts/research.md · @contexts/test.md |
 | Skill health check (refs/rule sync/orphans) | node templates/skill-stocktake.js (--skill <root>) |
 | Periodic iron-rule maintenance | @docs/rules/rules-distill.md |
 

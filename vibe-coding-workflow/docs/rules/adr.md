@@ -1,7 +1,7 @@
 # ADR 责任规则（L2 参考文档 · 触发条件：架构决策时）
 
 > 本文件为按需读取的参考文档（无触发不读）。铁律提炼见 `CLAUDE.md §0` 第 10 条。
-> 源：原 CLAUDE.md §9.5 + ECC skills/architecture-decision-records（module-002 补强）。
+> 源：原 CLAUDE.md §9.5 + ECC skills/architecture-decision-records。
 > ADR 模板见 `templates/adr-template.md`。
 
 ## 核心原则
